@@ -106,14 +106,18 @@ def stock_sentiment_analysis(symbol: str):
 
 # ------------------ FRONTEND (STREAMLIT) ------------------
 symbol = st.text_input("Enter NSE Stock Symbol:", placeholder="e.g., RELIANCE, TATAMOTORS, INFY", help="Enter the stock symbol without .NS")
+
 st.markdown("""
     <style>
     div.stButton > button {
-        margin-right: 10px;  /* Buttons ke beech gap kam karo */
+        margin-right: 5px;  /* Gap ko minimum kar diya */
+        padding: 8px 15px;  /* Button size thoda compact kiya */
     }
     </style>
 """, unsafe_allow_html=True)
-col1, col2 = st.columns([1,1])
+
+
+col1, col2 = st.columns([0.5, 0.5])
 
 
 with col1:
