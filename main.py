@@ -106,7 +106,7 @@ def stock_sentiment_analysis(symbol: str):
 
 # ------------------ FRONTEND (STREAMLIT) ------------------
 symbol = st.text_input("Enter NSE Stock Symbol:", placeholder="e.g., RELIANCE, TATAMOTORS, INFY", help="Enter the stock symbol without .NS")
-col1, col2 = st.columns(2)
+col1, col2 = st.columns([1,1])
 
 
 with col1:
