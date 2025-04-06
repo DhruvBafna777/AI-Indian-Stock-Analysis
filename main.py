@@ -109,7 +109,7 @@ symbol = st.text_input("Enter NSE Stock Symbol:", placeholder="e.g., RELIANCE, T
 
 
 
-col1, col2 , _ = st.columns([1,1,2])
+col1, col2 , _ = st.columns([1.2, 1.2, 1.6])
 
 
 with col1:
