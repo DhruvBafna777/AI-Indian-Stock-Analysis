@@ -107,62 +107,56 @@ def stock_sentiment_analysis(symbol: str):
 # ------------------ FRONTEND (STREAMLIT) ------------------
 symbol = st.text_input("Enter NSE Stock Symbol:", placeholder="e.g., RELIANCE, TATAMOTORS, INFY", help="Enter the stock symbol without .NS")
 
+if st.button("🔍 Analyze Stock"):
+    if not symbol:
+        st.error("Please enter a stock symbol")
+    else:
+        with st.spinner("Analyzing stock data..."):
+            price_data = get_stock_price(symbol.upper().strip())
 
-
-col1, col2 , _ = st.columns([1.2, 1.2, 1.6])
-
-
-with col1:
-    if st.button("🔍 Analyze Stock"):
-        if not symbol:
-            st.error("Please enter a stock symbol")
-        else:
-            with st.spinner("Analyzing stock data..."):
-                price_data = get_stock_price(symbol.upper().strip())
-
-                if "error" in price_data:
-                    st.error(price_data["error"])
-                else:
-                    st.success(f"Successfully retrieved data for {symbol}")
-                    st.metric(label="Current Stock Price", value=f"₹{price_data['price']:,.2f}")
-
-                    # **📊 Graph Plot**
-                    stock_data = get_stock_history(symbol)
-                    if stock_data is not None:
-                        st.subheader("📉 Stock Price Trend (Last 30 Days)")
-                        fig, ax = plt.subplots(figsize=(10, 5))
-                        ax.plot(stock_data.index, stock_data["Close"], marker="o", linestyle="-", color="blue", label="Closing Price")
-                        ax.set_xlabel("Date")
-                        ax.set_ylabel("Price (₹)")
-                        ax.set_title(f"{symbol} Stock Price Trend (Last 30 Days)")
-                        ax.legend()
-                        ax.grid(True)
-                        st.pyplot(fig)
-                    else:
-                        st.error("Stock price history not available.")
-
-                    tab1, tab2 = st.tabs(["📈 Market Analysis", "📰 Sentiment Analysis"])
-                    
-                    with tab1:
-                        with st.spinner("Generating market analysis..."):
-                            trend_analysis = analyze_stock_trends(symbol)
-                            st.write(trend_analysis)
-                    
-                    with tab2:
-                        with st.spinner("Analyzing market sentiment..."):
-                            sentiment = stock_sentiment_analysis(symbol)
-                            st.write(sentiment)
-with col2:        
-    if st.button("📊 Predict Future Price"):
-        with st.spinner("Predicting stock price..."):
-            stock_data = get_stock_data(symbol)
-            
-            if stock_data is not None:
-                model = train_model(stock_data)
-                prediction = predict_future(model, stock_data)
-                
-                st.success(f"📈 Predicted Next Day Price: ₹{prediction:.2f}")
+            if "error" in price_data:
+                st.error(price_data["error"])
             else:
-                st.error("Stock data not available.")
+                st.success(f"Successfully retrieved data for {symbol}")
+                st.metric(label="Current Stock Price", value=f"₹{price_data['price']:,.2f}")
+
+#                 # **📊 Graph Plot**
+                stock_data = get_stock_history(symbol)
+                if stock_data is not None:
+                    st.subheader("📉 Stock Price Trend (Last 30 Days)")
+                    fig, ax = plt.subplots(figsize=(10, 5))
+                    ax.plot(stock_data.index, stock_data["Close"], marker="o", linestyle="-", color="blue", label="Closing Price")
+                    ax.set_xlabel("Date")
+                    ax.set_ylabel("Price (₹)")
+                    ax.set_title(f"{symbol} Stock Price Trend (Last 30 Days)")
+                    ax.legend()
+                    ax.grid(True)
+                    st.pyplot(fig)
+                else:
+                    st.error("Stock price history not available.")
+
+                tab1, tab2 = st.tabs(["📈 Market Analysis", "📰 Sentiment Analysis"])
+                
+                with tab1:
+                    with st.spinner("Generating market analysis..."):
+                        trend_analysis = analyze_stock_trends(symbol)
+                        st.write(trend_analysis)
+                
+                with tab2:
+                    with st.spinner("Analyzing market sentiment..."):
+                        sentiment = stock_sentiment_analysis(symbol)
+                        st.write(sentiment)
+        
+if st.button("📊 Predict Future Price"):
+    with st.spinner("Predicting stock price..."):
+        stock_data = get_stock_data(symbol)
+        
+        if stock_data is not None:
+            model = train_model(stock_data)
+            prediction = predict_future(model, stock_data)
+            
+            st.success(f"📈 Predicted Next Day Price: ₹{prediction:.2f}")
+        else:
+            st.error("Stock data not available.")
 
 st.markdown('<div class="credits">Made with ❤️ by Dhruv Bafna (Jain)</div>', unsafe_allow_html=True)
