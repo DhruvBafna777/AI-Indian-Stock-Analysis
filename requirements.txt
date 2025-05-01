@@ -1,8 +1,8 @@
-streamlit
 yfinance
 groq
 python-dotenv
-pandas
+streamlit
 matplotlib
-numpy
-scikit-learn
+pandas
+nltk
+plotly
