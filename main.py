@@ -1,14 +1,18 @@
 import os
+import re
+import nltk
+import datetime
+import numpy as np
+import pandas as pd
 import yfinance as yf
 from groq import Groq
-from dotenv import load_dotenv
 import streamlit as st
 import matplotlib.pyplot as plt
-import pandas as pd
-import nltk
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import re
+from dotenv import load_dotenv
 import plotly.graph_objects as go
+from sklearn.linear_model import LinearRegression
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
 
 # Download NLTK data
 nltk.download('vader_lexicon')
@@ -25,7 +29,7 @@ st.set_page_config(
 )
 
 st.sidebar.header("Chart Settings")
-time_period = st.sidebar.selectbox("Select Time Period for Chart", ["1mo", "3mo", "6mo", "1y"], index=2)
+time_period = st.sidebar.selectbox("Select Time Period for Chart", ["1mo", "3mo", "6mo", "1y"], index=1)
 
 # Function to fetch stock data
 @st.cache_data
@@ -129,6 +133,47 @@ def get_ai_analysis(symbol, stock_info):
     except Exception as e:
         return f"Unable to generate AI analysis: {str(e)}"
 
+def plot_candlestick_chart(hist, symbol):
+    fig = go.Figure(data=[go.Candlestick(
+        x=hist.index,
+        open=hist['Open'],
+        high=hist['High'],
+        low=hist['Low'],
+        close=hist['Close'],
+        name="Candlestick",
+        increasing_line_color='green',
+        decreasing_line_color='red',
+        increasing_fillcolor='green',
+        decreasing_fillcolor='red',
+        opacity=0.9
+    )])
+    fig.update_layout(
+        title=f"{symbol} Candlestick Chart",
+        yaxis_title='Stock Price (₹)',
+        xaxis_title='Date',
+        xaxis_rangeslider_visible=False,
+        height=500
+    )
+    return fig
+def predict_stock_price(hist, days_ahead=10):
+    hist = hist[['Close']].copy()
+    hist['Date'] = hist.index
+    hist['Date'] = hist['Date'].map(datetime.datetime.toordinal) 
+
+    X = hist[['Date']]
+    y = hist['Close']
+
+    model = LinearRegression()
+    model.fit(X, y)
+
+    future_dates = [hist['Date'].max() + i for i in range(1, days_ahead + 1)]
+    future_dates_ordinal = np.array(future_dates).reshape(-1, 1)
+    predictions = model.predict(future_dates_ordinal)
+
+    future_dates = [datetime.datetime.fromordinal(int(d)) for d in future_dates]
+    
+    return future_dates, predictions
+
 # Main app
 st.title("AI-Powered Indian Stock Analysis 📊")
 st.markdown("Analyze Indian stocks with real-time data, AI insights, and sentiment analysis.")
@@ -167,21 +212,15 @@ if stock_symbol:
         # Sentiment Analysis with Visualization
         sentiment_text = stock_sentiment_analysis(stock_symbol)
         visualize_sentiment(sentiment_text, stock_symbol)
-
+        
     # Stock Chart and Analysis (col1)
     with col1:
-        # Monthly Stock Price Chart
-        st.subheader("Stock Price Chart")
-        fig, ax = plt.subplots()
-        ax.plot(hist.index, hist['Close'], label="Close Price", color="blue")
-        ax.set_title(f"{stock_symbol} Price ({time_period})")
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Price (₹)")
-        ax.grid(True)
-        ax.legend()
-        plt.xticks(rotation=45)
-        st.pyplot(fig)
+        
+        st.subheader("Candlestick Chart")
+        candlestick_fig = plot_candlestick_chart(hist, stock_symbol)
+        st.plotly_chart(candlestick_fig, use_container_width=True)
 
+        
         # Monthly Profit/Loss Table
         st.subheader("Monthly Profit/Loss")
         monthly_closes = hist['Close'].resample('ME').last()
@@ -201,6 +240,31 @@ if stock_symbol:
         st.subheader("AI Stock Analysis")
         analysis = get_ai_analysis(stock_symbol, stock_info)
         st.write(analysis)
+        
+        # Button to trigger prediction
+        if st.button('Predict Stock Price'):
+            # Predict for the next 30 days
+            future_dates, predictions = predict_stock_price(hist, days_ahead=10)
+            
+            # Display the predicted prices
+            st.subheader(f"Stock Price Prediction for the Next 10 Days")
+            prediction_df = pd.DataFrame({
+                'Date': future_dates,
+                'Predicted Price (₹)': predictions
+            })
+            st.table(prediction_df)
+
+            # Plot the predictions
+            st.subheader("Prediction Chart")
+            fig, ax = plt.subplots()
+            ax.plot(hist.index, hist['Close'], label="Historical Price", color="blue")
+            ax.plot(future_dates, predictions, label="Predicted Price", color="red", linestyle='--')
+            ax.set_title(f"{stock_symbol} Stock Price Prediction")
+            ax.set_xlabel("Date")
+            ax.set_ylabel("Price (₹)")
+            ax.legend()
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
 
 # Footer
 st.markdown("---")
