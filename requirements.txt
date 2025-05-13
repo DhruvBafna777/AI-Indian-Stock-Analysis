@@ -1,13 +1,11 @@
 
-re
 nltk
-datetime
 numpy
 pandas
 yfinance
 groq
 streamlit
 matplotlib
-dotenv
+python-dotenv
 plotly
 scikit-learn
